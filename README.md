@@ -2,6 +2,9 @@
 
 A GitLab CI/CD workflow that automates application build and validation, integrates vulnerability scanning, preserves pipeline artifacts, and builds and publishes a Docker image to the GitLab Container Registry.
 
+<img width="1536" height="1024" alt="image" src="https://github.com/user-attachments/assets/f8dcbcf0-2101-408f-b05f-785ea41dbf7c" />
+
+
 ## Overview
 
 This project demonstrates an end-to-end **GitLab CI/CD workflow** built around the **VProfile Java application workload**.
