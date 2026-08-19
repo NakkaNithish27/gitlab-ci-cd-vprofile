@@ -2,6 +2,9 @@
 
 [← Back to README](../README.md)
 
+<img width="1536" height="1024" alt="image" src="https://github.com/user-attachments/assets/772cf543-422a-4b9d-8298-7f66b00c677b" />
+
+
 ## 1. Architecture Overview
 
 This project implements a GitLab CI/CD workflow around an existing VProfile Java application workload.
