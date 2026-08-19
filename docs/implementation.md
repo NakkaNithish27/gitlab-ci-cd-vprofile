@@ -2,6 +2,9 @@
 
 [← Back to README](../README.md) | [Architecture →](architecture.md)
 
+<img width="1536" height="1024" alt="image" src="https://github.com/user-attachments/assets/d826f158-b86e-4aa5-8e03-d6c0d571a7d4" />
+
+
 ## 1. Implementation Overview
 
 This document describes how the GitLab CI/CD workflow was assembled and evolved around the existing VProfile application workload.
