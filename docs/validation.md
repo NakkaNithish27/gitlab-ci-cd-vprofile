@@ -2,6 +2,9 @@
 
 [← Back to README](../README.md) | [← Implementation](implementation.md) | [Architecture →](architecture.md)
 
+<img width="1536" height="1024" alt="image" src="https://github.com/user-attachments/assets/5ab8140d-f458-41de-9f8c-a68863a334c0" />
+
+
 ## 1. Validation Overview
 
 The purpose of validation is to prove that the GitLab CI/CD implementation behaves as intended from source change through container publication.
