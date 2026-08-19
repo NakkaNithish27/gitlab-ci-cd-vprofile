@@ -2,6 +2,9 @@
 
 [← Back to README](../README.md) | [← Architecture](architecture.md) | [← Implementation](implementation.md) | [← Validation](validation.md)
 
+<img width="1536" height="1024" alt="image" src="https://github.com/user-attachments/assets/67df0550-28ea-470a-92f4-1bd3a297c39e" />
+
+
 ## 1. Purpose
 
 This document defines the boundaries of the current GitLab CI/CD project and identifies logical future improvements.
