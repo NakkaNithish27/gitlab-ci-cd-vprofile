@@ -1,0 +1,151 @@
+
+stages:
+  - build
+  - test
+  - security
+  - docker
+  - notify
+
+variables:
+  PROJECT_NAME: "Vprofile-App"
+  JAVA_OPTS: ${JAVA_OPTIONS}
+
+cache:
+  paths:
+    - .m2/repository
+
+build-job:
+  stage: build
+  image: maven:3.9.9-eclipse-temurin-17
+
+  rules:
+    # Trigger on pushes to main or develop
+    - if: '$CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "develop"'
+
+    # Trigger on merge requests
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+
+    # Trigger when started manually
+    - if: '$CI_PIPELINE_SOURCE == "web"'
+
+    # Trigger on scheduled pipelines
+    - if: '$CI_PIPELINE_SOURCE == "schedule"'
+
+    # Otherwise never run
+    - when: never
+
+  script:
+    - echo "Building the project ${PROJECT_NAME}-test."
+    - echo "Java Options are $JAVA_OPTS"
+    - echo "My Secret is that $MY_SECRET"
+    - echo "The source of the pipeline trigger is $CI_PIPELINE_SOURCE for branch $CI_COMMIT_BRANCH"
+    - mvn -Dmaven.repo.local=$CI_PROJECT_DIR/.m2/repository install
+
+  after_script:
+    - ls -la
+    - ls -la .m2/repository || true
+
+  artifacts:
+    paths:
+      - target/*.war
+    when: always
+
+
+test-job:
+  stage: test
+  image: maven:3.9.9-eclipse-temurin-17
+
+  rules:
+    # Trigger on pushes to main or develop
+    - if: '$CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "develop"'
+
+    # Trigger on merge requests
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+
+    # Trigger when started manually
+    - if: '$CI_PIPELINE_SOURCE == "web"'
+
+    # Trigger when scheduled
+    - if: '$CI_PIPELINE_SOURCE == "schedule"'
+
+    # Otherwise never run
+    - when: never
+
+  needs:
+    - build-job
+
+  script:
+    - echo "Running tests on main branch..."
+    - mvn -Dmaven.repo.local=$CI_PROJECT_DIR/.m2/repository test
+    - mvn -Dmaven.repo.local=$CI_PROJECT_DIR/.m2/repository checkstyle:checkstyle
+
+
+security-scan:
+  stage: security
+
+  image:
+    name: aquasec/trivy:latest
+    entrypoint: [""]
+
+  rules:
+    # Trigger on pushes to main or develop
+    - if: '$CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "develop"'
+
+    # Trigger on merge requests
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+
+    # Trigger when started manually
+    - if: '$CI_PIPELINE_SOURCE == "web"'
+
+    # Trigger on scheduled pipelines
+    - if: '$CI_PIPELINE_SOURCE == "schedule"'
+
+    # Otherwise never run
+    - when: never
+
+  needs:
+    - job: build-job
+      artifacts: true
+
+  script:
+    - echo "Preparing Maven cache for Trivy..."
+    - mkdir -p /root/.m2
+    - rm -rf /root/.m2/repository
+    - cp -a "$CI_PROJECT_DIR/.m2/repository" /root/.m2/
+
+    - echo "Running Trivy filesystem vulnerability scan..."
+    - trivy fs --format json --exit-code 0 --pkg-types os,library --scanners vuln --offline-scan --output trivy-results.json .
+
+  after_script:
+    - echo "Security scan workspace:"
+    - ls -la
+    - ls -la /root/.m2/repository || true
+
+  artifacts:
+    paths:
+      - trivy-results.json
+    when: always
+
+docker-build-publish:
+  stage: docker
+  image: docker:latest
+  services:
+    - docker:dind
+  needs: [security-scan]
+  variables:
+    DOCKER_TLS_CERTDIR: ""
+    IMAGE_TAG: $CI_COMMIT_SHA
+  script:
+    - echo "🔑 Logging in to GitLab Container Registry..."
+    - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin $CI_REGISTRY
+    - echo "🐳 Building Docker image with custom Dockerfile..."
+    - docker build -f Docker-files/app/multistage/Dockerfile -t $CI_REGISTRY_IMAGE:$IMAGE_TAG .
+    - echo "📦 Pushing Docker image => $CI_REGISTRY_IMAGE:$IMAGE_TAG"
+    - docker push $CI_REGISTRY_IMAGE:$IMAGE_TAG
+notify-on-failure:
+  stage: notify
+
+  script:
+    - echo "🚨 Build or Test job failed for $PROJECT_NAME! Please check logs."
+
+  when: on_failure
